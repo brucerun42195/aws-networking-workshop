@@ -1,0 +1,196 @@
+AWSTemplateFormatVersion: 2010-09-09
+Resources:
+  VPC4VPN:
+    Type: 'AWS::EC2::VPC'
+    Properties:
+      CidrBlock: 10.1.0.0/16
+      EnableDnsSupport: 'true'
+      EnableDnsHostnames: 'true'
+      Tags:
+        - Key: Name
+          Value: VPC4VPN
+  VPC10:
+    Type: 'AWS::EC2::VPC'
+    Properties:
+      CidrBlock: 10.10.0.0/16
+      EnableDnsSupport: 'true'
+      EnableDnsHostnames: 'true'
+      Tags:
+        - Key: Name
+          Value: VPC10
+  VPC20:
+    Type: 'AWS::EC2::VPC'
+    Properties:
+      CidrBlock: 10.20.0.0/16
+      EnableDnsSupport: 'true'
+      EnableDnsHostnames: 'true'
+      Tags:
+        - Key: Name
+          Value: VPC20
+  Subnet1:
+    Type: 'AWS::EC2::Subnet'
+    Properties:
+      VpcId: !Ref VPC4VPN
+      CidrBlock: 10.1.1.0/24
+      AvailabilityZone: "us-east-1a"
+      Tags:
+        - Key: Name
+          Value: VPC4VPN-SN1
+  Subnet2:
+    Type: 'AWS::EC2::Subnet'
+    Properties:
+      VpcId: !Ref VPC4VPN
+      CidrBlock: 10.1.2.0/24
+      AvailabilityZone: "us-east-1b"
+      Tags:
+        - Key: Name
+          Value: VPC4VPN-SN2
+  Subnet10:
+    Type: 'AWS::EC2::Subnet'
+    Properties:
+      VpcId: !Ref VPC10
+      CidrBlock: 10.10.1.0/24
+      Tags:
+        - Key: Name
+          Value: VPC10-SN1
+  Subnet11:
+    Type: 'AWS::EC2::Subnet'
+    Properties:
+      VpcId: !Ref VPC10
+      CidrBlock: 10.10.2.0/24
+      Tags:
+        - Key: Name
+          Value: VPC10-SN2
+  Subnet20:
+    Type: 'AWS::EC2::Subnet'
+    Properties:
+      VpcId: !Ref VPC20
+      CidrBlock: 10.20.1.0/24
+      Tags:
+        - Key: Name
+          Value: VPC20-SN1
+  Subnet21:
+    Type: 'AWS::EC2::Subnet'
+    Properties:
+      VpcId: !Ref VPC20
+      CidrBlock: 10.20.2.0/24
+      Tags:
+        - Key: Name
+          Value: VPC20-SN2
+  InternetGatewayVPC4VPN:
+    Type: 'AWS::EC2::InternetGateway'
+    Properties:
+      Tags:
+        - Key:  Name
+          Value: VPC4VPN-IGW
+  InternetGatewayVPC10:
+    Type: 'AWS::EC2::InternetGateway'
+    Properties:
+      Tags:
+        - Key:  Name
+          Value: VPC10-IGW
+  InternetGatewayVPC20:
+    Type: 'AWS::EC2::InternetGateway'
+    Properties:
+      Tags:
+        - Key:  Name
+          Value: VPC20-IGW
+  AttachGatewayVPC4VPN:
+    Type: 'AWS::EC2::VPCGatewayAttachment'
+    Properties:
+      VpcId: !Ref VPC4VPN
+      InternetGatewayId: !Ref InternetGatewayVPC4VPN
+  AttachGatewayVPC10:
+    Type: 'AWS::EC2::VPCGatewayAttachment'
+    Properties:
+      VpcId: !Ref VPC10
+      InternetGatewayId: !Ref InternetGatewayVPC10
+  AttachGatewayVPC20:
+    Type: 'AWS::EC2::VPCGatewayAttachment'
+    Properties:
+      VpcId: !Ref VPC20
+      InternetGatewayId: !Ref InternetGatewayVPC20
+  RouteTableVPC4VPN:
+    Type: 'AWS::EC2::RouteTable'
+    Properties:
+      VpcId: !Ref VPC4VPN
+      Tags:
+        - Key: Name
+          Value: VPC4VPN-RT
+  RouteTableVPC10:
+    Type: 'AWS::EC2::RouteTable'
+    Properties:
+      VpcId: !Ref VPC10
+      Tags:
+        - Key: Name
+          Value: VPC10-RT
+  RouteTableVPC20:
+    Type: 'AWS::EC2::RouteTable'
+    Properties:
+      VpcId: !Ref VPC20
+      Tags:
+        - Key: Name
+          Value: VPC20-RT
+  RouteVPC4VPN:
+    Type: 'AWS::EC2::Route'
+    DependsOn: AttachGatewayVPC4VPN
+    Properties:
+      RouteTableId: !Ref RouteTableVPC4VPN
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGatewayVPC4VPN
+  RouteVPC10:
+    Type: 'AWS::EC2::Route'
+    DependsOn: AttachGatewayVPC10
+    Properties:
+      RouteTableId: !Ref RouteTableVPC10
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGatewayVPC10
+  RouteVPC20:
+    Type: 'AWS::EC2::Route'
+    DependsOn: AttachGatewayVPC20
+    Properties:
+      RouteTableId: !Ref RouteTableVPC20
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGatewayVPC20
+  SubnetRouteTableAssociation1:
+    Type: 'AWS::EC2::SubnetRouteTableAssociation'
+    Properties:
+      SubnetId: !Ref Subnet1
+      RouteTableId: !Ref RouteTableVPC4VPN
+  SubnetRouteTableAssociation10:
+    Type: 'AWS::EC2::SubnetRouteTableAssociation'
+    Properties:
+      SubnetId: !Ref Subnet10
+      RouteTableId: !Ref RouteTableVPC10
+  SubnetRouteTableAssociation20:
+    Type: 'AWS::EC2::SubnetRouteTableAssociation'
+    Properties:
+      SubnetId: !Ref Subnet20
+      RouteTableId: !Ref RouteTableVPC20
+  SubnetRouteTableAssociation2:
+    Type: 'AWS::EC2::SubnetRouteTableAssociation'
+    Properties:
+      SubnetId: !Ref Subnet2
+      RouteTableId: !Ref RouteTableVPC4VPN
+  SubnetRouteTableAssociation11:
+    Type: 'AWS::EC2::SubnetRouteTableAssociation'
+    Properties:
+      SubnetId: !Ref Subnet11
+      RouteTableId: !Ref RouteTableVPC10
+  SubnetRouteTableAssociation21:
+    Type: 'AWS::EC2::SubnetRouteTableAssociation'
+    Properties:
+      SubnetId: !Ref Subnet21
+      RouteTableId: !Ref RouteTableVPC20
+  MSDirectory:
+   Type: AWS::DirectoryService::MicrosoftAD
+   Properties:
+     Edition: Standard
+     Name: "workshop.aws.com"
+     Password: Passw0rd!
+     VpcSettings:
+       SubnetIds:
+         - Ref: Subnet1
+         - Ref: Subnet2
+       VpcId:
+         Ref: VPC4VPN
