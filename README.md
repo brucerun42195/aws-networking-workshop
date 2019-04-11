@@ -8,11 +8,32 @@ The objective of this workshop is to take you to build a hybrid architecture ste
 ![Deployment Diagram](images/architecture.jpg)
 
 
-**STEP 0**
+**STEP 1 - Create VPCs**
 ---------------------------
-**Create Three VPCs**
 
-For avoiding misconfiguration, PLEASE check download the CloudFormation template 
+For avoiding misconfiguration, we will automatically create the 3 VPCs by using CloudFormation. Copy the link below and specify the path as an template URL. 
+
+<https://s3.amazonaws.com/ykwang-networking-workshop/create3vpc.yaml>
+
+1) Choose **Creat new stack** on the CloudFormation page.
+ 
+![Deployment Diagram](images/newstack.jpg)
+
+2) Past the link under **Specify an Amazon S3 template URL** and click **Next**
+
+![Deployment Diagram](images/templateurl.jpg)
+
+3) Specify a stack name and click **Next**
+
+![Deployment Diagram](images/stackname.jpg)
+
+4) Click **Next** to skip **Option** page and click **Create** on **Review** page. CloudFormation will automatically create the VPCs and related resources. Wait 15 ~ 20 minutes and make sure the status is **CREATE_COMPLETE**
+
+![Deployment Diagram](images/createcomplete.jpg)
+
+5) On VPC dashboard, there are 3 VPCs (VPC4VPN, VPC10 and VPC20) created by ClouFormation, and check the name and IPv4 CIDR of subnets that are the same with the screenshot below.  
+
+![Deployment Diagram](images/subnets.jpg)
 
 
 
