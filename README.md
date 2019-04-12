@@ -8,283 +8,120 @@ The objective of this workshop is to take you to build a hybrid architecture ste
 ![Deployment Diagram](images/architecture.jpg)
 
 
-**STEP 1 - Create VPCs**
+**STEP 1 - Enviornment Set-up**
 ---------------------------
 
 For avoiding misconfiguration, we will automatically create the 3 VPCs by using CloudFormation. Copy the link below and specify the path as an template URL. 
 
-<https://s3.amazonaws.com/ykwang-networking-workshop/create3vpc.yaml>
+<https://s3.amazonaws.com/ykwang-networking-workshop/networking-workshop.yaml>
 
 1) Choose **Creat new stack** on the CloudFormation page.
  
 ![Deployment Diagram](images/newstack.jpg)
 
-2) Past the link under **Specify an Amazon S3 template URL** and click **Next**
+2) Past the link under **Specify an Amazon S3 template URL** and click **Next**.
 
 ![Deployment Diagram](images/templateurl.jpg)
 
-3) Specify a stack name and click **Next**
+3) Specify your stack name and choose **KeyName** for accessing EC2 via SSH, then click **Next**.
 
 ![Deployment Diagram](images/stackname.jpg)
 
-4) Click **Next** to skip **Option** page and click **Create** on **Review** page. CloudFormation will automatically create the VPCs and related resources. Wait 15 ~ 20 minutes and make sure the status is **CREATE_COMPLETE**
+4) Click **Next** to skip **Option** page and click **Create** on **Review** page. CloudFormation will automatically create the VPCs and related resources. Wait about 25 ~ 30 minutes and make sure the status is **CREATE_COMPLETE**.
 
 ![Deployment Diagram](images/createcomplete.jpg)
 
-5) On VPC dashboard, there are 3 VPCs (VPC4VPN, VPC10 and VPC20) created by ClouFormation, and check the name and IPv4 CIDR of subnets that are the same with the screenshot below.  
+5) Verify all resources CloudFormation created are identical as below.  
 
-![Deployment Diagram](images/subnets.jpg)
+**VPC AND SUBNET**
+
+* VPC4VPN - 10.1.0.0/16 (VPC4VPN-SN1 - 10.1.1.0/24, VPC4VPN-SN2 - 10.1.2.0/24)
+* VPC10 - 10.10.0.0/16 (VPC10-SN1 - 10.10.1.0/24, VPC10-SN2 - 10.10.2.0/24)
+* VPC20 - 10.20.0.0/16 (VPC20-SN1 - 10.20.1.0/24, VPC20-SN2 - 10.20.2.0/24)
+
+**EC2 INSTANCE (Record your EC2 private IP)**
+
+* ICMP Client in VPC10 - IP 10.10.1.X
+* ICMP Client in VPC20 - IP 10.10.2.X
+
+**Directory Service (Record MicrosoftAD DNS address)**
+
+![Deployment Diagram](images/addns.jpg)
+
+**STEP 2 - Create VPN Users on Microsoft AD**
+---------------------------
+To create users and groups in an AWS Directory Service directory, you must be connected to a EC2 instance that has been joined to your AWS Directory Service directory, and be logged in as a user that has privileges to create users and groups. You will also need to install the Active Directory Tools on your EC2 instance so you can add your users and groups with the Active Directory Users and Computers snap-in. 
+
+1) Create a DHCP Options Set for Your Directory
+
+Open the Amazon VPC console and choose **DHCP Options Sets** in the navigation pane. Then choose Create DHCP options set. Type a name you like and type **workshop.aws.com** for **Domain name**. For **Domain name servers**, type the IP addresses of your AWS provided directory's DNS servers you just recorded. Leave the settings blank for **NTP servers**, **NetBIOS name servers**, and **NetBIOS node type**. Choose **Create DHCP options set**. Make a note of the ID of the new set of DHCP options (dopt-xxxxxxxx).
+
+![Deployment Diagram](images/dhcp.jpg)
+
+2) Apply DHCP Options Set to VPC4VPN
+
+Back to VPC console, select **VPC4VPN**, choose **Actions**, and then choose **Edit DHCP Options Set**. 
+
+![Deployment Diagram](images/editdhcp.jpg)
+
+In the Edit DHCP Options Set dialog box, select the options set that you recorded in last step. Then choose Save. 
+
+![Deployment Diagram](images/editdhcp2.jpg)
 
 
+3) Create a Windows Instance and Automatically Join the Directory
 
-**Logical Components**
+Open the Amazon EC2 console, choose Launch Instance and select **Microsoft Windows Server 2016 Base AMI**. On the page of **Configure Instance Details**, do the following:
 
-1) Cloud providers - BIG-IP Cloud Edition supports deployment and auto scale of BIG-IP instances on the following cloud platforms:
+* Choose **VPC4VPN** for **Network**
+* Choose **VPC4VPN-SN1** for **Subnet**
+* Choose **Use subnet setting(Enable)** for **Auto-assign Public IP**
+* Choose **workshop.aws.com** for **Domain join directory**
 
-* Amazon Web Services (AWS)
- 
-* VMware vCenter-based private clouds
+![Deployment Diagram](images/instanceconfig.jpg)
 
-2) Device templates - Device templates define all infrastructure-level characteristics (time zone, DNS, hostname, accounts, NTP, licensing, networking, etc.) that are required to deploy a BIG-IP device.
+Click **Create new IAM role** to create a new IAM role and attach the AmazonEC2RoleforSSM policy. Under **Select your use case**, choose **EC2**, and then choose **Next**. Type **AmazonEC2RoleforSSM** at search bar, select it and then choose **Next**.
 
-3) Service scaling groups (SSG) - When application services are deployed from an application template and a service scaling group is selected as the target, BIG-IP Cloud Edition manages the availability and elastic scaling of resources to deliver the services, plus manages the lifecycle and upgrade process for the BIG-IP devices delivering those services.
+![Deployment Diagram](images/roleforssm.jpg)
 
-4) Application templates - Application templates define the application delivery and security services that will be deployed for an application, including all BIG-IP objects such as virtual servers, profiles, monitors, SSL certificates, security policies, etc.
+For **Role name**, enter a name for your new role (such as EC2DomainJoin). Then choose Create role.
 
-**Deployment Process**
+![Deployment Diagram](images/roleforssm2.jpg)
 
-To start auto-scaling BIG-IP VE devices for application in AWS, you need to complete these procedures.
+Back to the page of **Configure Instance Details**, select **EC2DomainJoin** for **IAM role**.
 
-* Step 1. Set up AWS environment
+![Deployment Diagram](images/instanceprofile.jpg)
 
-* Step 2. Create device template for BIG-IP VE
+Keep the setting default on the page of **Add Storage**, add key:Name and value:WinServer for tag, choose **Select an existing security group** and select the security group with name **Allow RDP and ICMP** and then click **Review and Launch**. Click **Launch** again and select a keypair for this workshop. 
 
-* Step 3. Add cloud and environment to BIG-IQ
+![Deployment Diagram](images/ec2_sg.jpg)
 
-* Step 4. Create a service scaling group
 
-* Step 5. Create service template
+4) Install the Active Directory Tools on Your EC2 Instance
 
-* Step 6. Addign permissions to users (option)
+Open EC2 console, download Remote Desktop File and get the administrator password.
 
-* Step 7. Create and deploy an application
+![Deployment Diagram](images/rdp.jpg)
+
+Open your RDP software and login Windows instance with username:Administrator and password you just decrypted and then do the following:
+
+From the Start menu, choose Windows PowerShell and Copy the following command.
+
+		Install-WindowsFeature -Name GPMC,RSAT-AD-PowerShell,RSAT-AD-AdminCenter,RSAT-ADDS-Tools,RSAT-DNS-Server
+
+**IMPORTANT** After installation of AD tools, logout and re-login with domain administrator. Use **workshop.aws.com\admin** as username and **Passw0rd!** as password.  
+
+5) Create a User
+
+From the Start menu, choose **Active Directory Users and Computers**. In the directory tree, select **Users** OU under **workshop** directory and click **Action**, click **New** to create a **User**. Type **First name**, **Last name**, **User logon name** and click **Next**. On the second page of the wizard, type a password in **Password** and **Confirm Password**. Uncheck **User must change password at next logon**, select **Password never expires** and then click **Next** click **Finish**
+
+![Deployment Diagram](images/aduser.jpg)
+
 
 
 **Deploy BIG-IP Cloud Edition in AWS**
 ----------------------------------------------
-Customers can deploy BIG-IP Cloud Edition from scratch in AWS through subscribing F5 software appliances on AWS marketplace or use BIG-IP Cloud Edition Trial Quick Start which is an AWS CloudFormation Template (CFT) created by F5 to allow customers to experience the solution in an automation way. 
-In order to reduce human errors and minimize the time to deploy, we will use CloudFormation template as example to explain each step in the later chatper. 
-
-
-**BIG-IP Cloud Edition Trial Quick Start**
-
-To deploy the BIG-IP Cloud Edition Trial Quick Start in AWS, check the link below.
-<https://github.com/f5devcentral/f5-big-ip-cloud-edition-trial-quick-start>
-
-This CloudFormation Template (CFT) creates two BIG-IQ VE instances: a BIG-IQ CM instance to configure and orchestrate instances of BIG-IP VE, and a BIG-IQ Data Collection Device (DCD) to store analytics data. The CFT also creates an Apache demo web server.
-Enter the service page of CloudFormation and verify the bigiqCmUrl showed on the Outputs tab.
-
-![Deployment Diagram](images/cloudformation.png)
-
-SSH to BIG-IQ VE instance and create an admin user password for web access.
-
-![Deployment Diagram](images/bigiqcm-ssh.jpg)
-
-	1. Type "modify auth password admin"
-	2. Type new password
-	3. Confirm new password
-	4. Type "save sys config"
-	
-![Deployment Diagram](images/bigiqchangepwd.jpg)
-
-Open BIG-IQ login page and enter username as "admin", password as you typed above. 
-
-![Deployment Diagram](images/f5big-iq-login.jpg)
-
-
-
-
-**Configuration**
---------------------------------------
-
-**Step 1. Set up AWS environment**
-
-The full access permissions you need to be granted are Auto Scale Groups, Instances, SQS, S3, CloudWatch, and CloudFormation. Additionally, you need list, create, and delete permissions for the IAM role/rolePolicy/InstanceProfile.
-
-1) VPC Configurations
-
-* Create VPC with 2 subnets in different AZs and unique CIDR
-* Create Internet gateway and attach it to VPC
-* Create route table for each subnet with default route
-	
-2) Create a key pair to allow SSH access
-
-3) Create a security group to protect the elastic load balancer
-
-4) Create a classic elastic load balancer (ELB) as tier1 service scaler to distribute requests from Internet to BIG-IP VE of SSG.
-
-	1. ELB Type: Classic Load Balancer
-	2. Health Checks: 
-       * Ping protocol:TCP
-       * Ping port: 22
-       * Timeout: 5 seconds
-       * Interval: 30 seconds
-	3. EC2 Instances: Enabled Cross-Zone Load Balancing and Connection Draining at 300 seconds.
-	4. Edit the ELB listeners to remove the default listener (Load Balancer Protocol and Instance Protocol of HTTP on port 80).
-
-**Step 2. Create device template for BIG-IP VE**
-
-1) At BIG-IQ page, click **Devices** then, on the left, click **DEVICE TEMPLATES**.
-
-2) Click **Create** button.
-
-3) Name the template, click **Add/Remove** button and select AWS as "Provider Type".
-
-![Deployment Diagram](images/device-template.jpg)
-
-4) Leave the **Configuration** as blank and **User Account** as default value, configure **DNS&NTP** with apporpriate value. 
-
-![Deployment Diagram](images/dnsntp.jpg)
-
-**Step 3. Add cloud and environment to BIG-IQ**
-
-1) At the top of the screen, click **Applications** then, on the left, click **ENVIRONMENTS** > **Cloud Providers**.
-
-2) Click **Create** button.
-
-3) From the **Provider Type** list, select AWS. Type your Access Key ID and Secret Access Key , and then click Test to confirm your connection.
-
-![Deployment Diagram](images/cloudprovider.jpg)
-
-4) Activate BYOL licenses. At top of the screen, click **Devices** > **LICENSE MANAGEMENT** > **Licenses**.
-
-5) Click **Add License** button. Type a name to identify this license. Type your license key in **Base Registration Key** field and **Add-on Keys** field.
-
-6) For the Activation Method setting, select **Automatic**.
-
-7) At the top of the screen, click **Applications** then, on the left, click **ENVIRONMENTS** > **Cloud Environments**.
-
-8) Click **Create**. The Create Application screen opens. 
-
-Type and select appropriate values as follow.
-	
-	1. Name: your_environment_name
-	2. Description: your_description
-	3. Device Template: device template you created in Step 2
-	4. Region: The AWS region you deployed for this quick start
-	5. VPC: VPC you crreated for this environment
-	6. Availability Zone Subnets: The subnets defined for this VPC are listed under Available
-	7. Restricted Source Address: The CIDR range you allow to access this SSG
-	8. SSH Key Name: EC2 Key pair
-	9. Services to Deploy: F5 services you want to deploy on SSG (LTM/ASM/AVR)
-	10. License Type: BYOL or Utility
-	11. AMI Image: Select the latest version
-	12. Instance Type: EC2 instance type for SSG
-
-_If you selected BYOL, supply the following information_
-	
-	13. BIG-IQ IP Address: Type BIG-IQ IP address
-	14. BIG-IQ User: Type "admin"
-	15. BIG-IQ Password: Type admin password
-	16. BIG-IQ License Pool Name: Type license name you input on 5)
-	17. Offering Name: leave as blank
-	18. Unit of Measure: Hourly
-
-![Deployment Diagram](images/cloudenv1.jpg)
-
-![Deployment Diagram](images/cloudenv2.jpg)
-
-**Step 4. Create a service scaling group**
-
-1) Click **Applications** > **ENVIRONMENT** > **Service Scaling Groups** > click **Create** button
-
-2) Type the name and description. Select **Cloud Environment** you craeted in Step 3. 
-
-3) Type the minimum and maximum number of BIG-IP VE you want running
-
-4) Define the **Scale-Out** and **Scale-In** policy
-
-5) Leave the cooldown period as default 15 minutes
-
-6) Define **Health Status Rules** for **Notifications**  
-
-![Deployment Diagram](images/ssg.jpg)
-
-**Step 5. Create service template** 
-
-1) Click **Applications** > **SERVICE CATALOG** > clone default template **Default-AWS-f5-HTTPS-WAF-lb-template**
-
-2) Name your service template
-
-3) Click service template name you just created
-
-4) Keep **PROPERTIES** as default, you can configure each object under **LOCAL TRAFFIC**. We will configure **Virtual Servers** to demostrate how service template works.
-
-5) Click **Virtual Servers** > click the name of virtial server template (ex: Demo-AWS-HTTPS-WAF-LTM_default_vs).
-
-![Deployment Diagram](images/vs-template.jpg)
-
-_Note: A Service Template is a baseline for creating a new application. This allows you to maintain a consistent environment. Parameters that you define as editable are visible and can be revised. Using that template, and without having a lot of network expertise, the application manager can deploy the application objects you want by simply specifying a few key values._
-
-6) Check **Editable** box in the right hand side of **Description** and **State(on BIG-IQ)**. Click the **Preview** in the upper right corner to see what the user interface look like when someone uses this template to deploy an application. You can also configure **Pools**, **Nodes**, etc. but we will keep it as default.
-
-![Deployment Diagram](images/vs-preview.jpg)
-
-**Step 6. Addign permissions to users (option)**
-
-1) Click **System** > **USER MANAGEMENT** > **Users**, click **Add** button.
-
-2) Select **Auth Provider** as local, type **User name**, **Full Name**, **Password** and **Confirm Password**. Click **Save&Close**.
-
-3) Click **ROLE MANAGEMENT** > **Roles** > **CUSTOM ROLES** > **Application Roles** > **Add**
-
-4) Type **Name** and **Description**, select the user you want to join to this role. Select **Templates** and **Service Scaling Group** you want this role access to.
-
-5) Click **Save&Close** 
-
-![Deployment Diagram](images/app-role.jpg)
-
-**Step 7. Create and deploy an application**
-
-1) Click **Applications** > **APPLICATIONS** > **Create**.
-
-2) Select **Template** you created in Step 5 and type the **Name** and **Description**
-
-3) Create AWS ELB(classic) as tier1 load balancer, copy and past ELB DNS name to **Domain Names** 
-
-![Deployment Diagram](images/clb-dns.jpg)
-
-4) Select **Service Scaling Group** and group name you created in Step 4
-
-![Deployment Diagram](images/app-ssg.jpg)
-
-5) Change AWS ELB Setting as follow
-
-![Deployment Diagram](images/app-elb.jpg)
-
-6) Leave others setting as default and click **Create**
-
-7) After application was successfully created, you can see the dashboad in **APPLICATIONS**
-
-![Deployment Diagram](images/dashboard.jpg)
-
-8) Copy and past the ELB DNS name to your browser, you will see the Ubuntu web page which was created by BIG-IP Cloud Edition Trial Quick Start.
-
-![Deployment Diagram](images/ubuntu.jpg)
-
-9) Click you application (ex. Demo-Web), go through every tabs listed in the middle of the screen. You can observe the performance metrics from every perspective.
-
-![Deployment Diagram](images/metric.jpg)
-
-**Teardown the BIG-IP Cloud Edition Trial Quick Start**
-------------------------------------------------------- 
-1) Open BIG-IQ CM in a web browser, delete the application, under Applications tab > APPLICATIONS, select the application, then click Delete.
-
-2) Delete the Service Scaling Group, under Application tab > ENVIRONMENTS > Service Scaling Groups, select the AWS SSG, then Delete.
-
-3) Open the Cloud Formation Console and delete the stack.
-
-4) Delete the AWS ELB created for this application
+Customers can deplo
 
 
 

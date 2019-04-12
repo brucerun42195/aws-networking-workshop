@@ -1,4 +1,8 @@
 AWSTemplateFormatVersion: 2010-09-09
+Parameters:
+  KeyName:
+    Description: Name of an existing EC2 KeyPair to enable SSH access to the instance
+    Type: 'AWS::EC2::KeyPair::KeyName'
 Resources:
   VPC4VPN:
     Type: 'AWS::EC2::VPC'
@@ -33,6 +37,7 @@ Resources:
       VpcId: !Ref VPC4VPN
       CidrBlock: 10.1.1.0/24
       AvailabilityZone: "us-east-1a"
+      MapPublicIpOnLaunch: 'true'
       Tags:
         - Key: Name
           Value: VPC4VPN-SN1
@@ -42,6 +47,7 @@ Resources:
       VpcId: !Ref VPC4VPN
       CidrBlock: 10.1.2.0/24
       AvailabilityZone: "us-east-1b"
+      MapPublicIpOnLaunch: 'true'
       Tags:
         - Key: Name
           Value: VPC4VPN-SN2
@@ -50,6 +56,8 @@ Resources:
     Properties:
       VpcId: !Ref VPC10
       CidrBlock: 10.10.1.0/24
+      AvailabilityZone: "us-east-1a"
+      MapPublicIpOnLaunch: 'true'
       Tags:
         - Key: Name
           Value: VPC10-SN1
@@ -58,6 +66,8 @@ Resources:
     Properties:
       VpcId: !Ref VPC10
       CidrBlock: 10.10.2.0/24
+      AvailabilityZone: "us-east-1b"
+      MapPublicIpOnLaunch: 'true'
       Tags:
         - Key: Name
           Value: VPC10-SN2
@@ -66,6 +76,8 @@ Resources:
     Properties:
       VpcId: !Ref VPC20
       CidrBlock: 10.20.1.0/24
+      AvailabilityZone: "us-east-1a"
+      MapPublicIpOnLaunch: 'true'
       Tags:
         - Key: Name
           Value: VPC20-SN1
@@ -74,6 +86,8 @@ Resources:
     Properties:
       VpcId: !Ref VPC20
       CidrBlock: 10.20.2.0/24
+      AvailabilityZone: "us-east-1b"
+      MapPublicIpOnLaunch: 'true'
       Tags:
         - Key: Name
           Value: VPC20-SN2
@@ -194,3 +208,75 @@ Resources:
          - Ref: Subnet2
        VpcId:
          Ref: VPC4VPN
+  SGVPC4VPN:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow rdp and icmp to client host
+      GroupName: Allow RDP and ICMP
+      VpcId:
+        Ref: VPC4VPN
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: 3389
+        ToPort: 3389
+        CidrIp: 0.0.0.0/0
+      - IpProtocol: icmp
+        FromPort: -1
+        ToPort: -1
+        CidrIp: 0.0.0.0/0
+  SGVPC10:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow ssh and icmp to client host
+      GroupName: Allow SSH and ICMP
+      VpcId:
+        Ref: VPC10
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: 22
+        ToPort: 22
+        CidrIp: 0.0.0.0/0
+      - IpProtocol: icmp
+        FromPort: -1
+        ToPort: -1
+        CidrIp: 0.0.0.0/0
+  SGVPC20:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow ssh and icmp to client host
+      GroupName: Allow SSH and ICMP
+      VpcId:
+        Ref: VPC20
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: 22
+        ToPort: 22
+        CidrIp: 0.0.0.0/0
+      - IpProtocol: icmp
+        FromPort: -1
+        ToPort: -1
+        CidrIp: 0.0.0.0/0
+  EC2VPC10:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: t2.micro
+      ImageId: "ami-0080e4c5bc078760e"
+      KeyName: !Ref KeyName
+      SubnetId: !Ref Subnet10
+      SecurityGroupIds:
+        - !Ref SGVPC10
+      Tags:
+        - Key: Name
+          Value: ICMP Client in VPC10
+  EC2VPC20:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: t2.micro
+      ImageId: "ami-0080e4c5bc078760e"
+      KeyName: !Ref KeyName
+      SubnetId: !Ref Subnet20
+      SecurityGroupIds:
+        - !Ref SGVPC20
+      Tags:
+        - Key: Name
+          Value: ICMP Client in VPC20
