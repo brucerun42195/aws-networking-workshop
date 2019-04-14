@@ -135,6 +135,8 @@ Right click at **VPN Users** group, choose **Properties** and click **Members** 
 
 AWS Client VPN is a managed client-based VPN service that enables you to securely access your AWS resources and resources in your on-premises network. With Client VPN, you can access your resources from any location using an OpenVPN-based VPN client. 
 
+![Deployment Diagram](images/step3.jpg)
+
 1) Generate a Server Certificate and import into ACM
 
 **IMPORTANT** - AWS CLI tool is essential in this step. If the laptop you use without AWS CLI tool, you can ssh to EC2 instance in VPC10 to complete it.  
@@ -259,6 +261,8 @@ Ping the Linux instances located in VPC10 to verify whether the vpn connection c
 
 A transit gateway acts as a regional virtual router for traffic flowing between your virtual private clouds (VPC) and VPN connections. A transit gateway scales elastically based on the volume of network traffic. Routing through a transit gateway operates at layer 3, where the packets are sent to a specific next-hop attachment, based on their destination IP addresses.
 
+![Deployment Diagram](images/step4.jpg)
+
 1) Create the Transit Gateway
 
 Open the Amazon VPC console, choose **Transit Gateways** and **Create Transit Gateway**. Type **Networking Workshop** for **Name tag** and leave others setting as default.
@@ -318,6 +322,7 @@ You can ssh into the Linux instance in VPC10 and ping the private IP of instance
 
 **STEP 5 - AWS Route 53 and DNS Resolver**
 ----------------------------------------------
+![Deployment Diagram](images/step5.jpg)
 
 1) Create a Route 53 Private Hosted Zone for VPCs
 
@@ -352,7 +357,7 @@ Repeat the step above to create A record in VPC10 and VPC20
 	Type: A-IPv4 address
 	Alias: No
 	TTL: 0
-	Value: **your instance private ip in VPC10** (ex. 10.10.1.162)
+	Value: your instance private ip in VPC10 (ex. 10.10.1.162)
 	Routing Policy: Simple 
 	
 **Instance in VPC20**
@@ -361,7 +366,7 @@ Repeat the step above to create A record in VPC10 and VPC20
 	Type: A-IPv4 address
 	Alias: No
 	TTL: 0
-	Value: **your instance private ip in VPC20** (ex. 10.20.1.152)
+	Value: your instance private ip in VPC20 (ex. 10.20.1.152)
 	Routing Policy: Simple 
 
 Confirm the DNS records are created successfully. 
