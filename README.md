@@ -12,7 +12,7 @@ The objective of this workshop is to take you to build a hybrid architecture ste
 **STEP 1 - Enviornment Set-Up**
 ---------------------------
 
-For avoiding misconfiguration, we will automatically create the 3 VPCs by using CloudFormation. Copy the link below and specify the path as an template URL. 
+For avoiding misconfiguration, we will create the workshop environment by using CloudFormation. Copy the link below and past it as the template URL. 
 
 <https://s3.amazonaws.com/ykwang-networking-workshop/networking-workshop.yaml>
 
