@@ -3,7 +3,7 @@
 
 More and more customers have been migrating their production workloads from on-premises into AWS cloud. But in the mean time, it's a huge challenge on how to connect tens or hundreds of VPC together and still have ability to control routing. Additionally, how to build a hybrid DNS architecture to allow all workloads communicating each other through DNS is a complicated question as well.
 
-The objective of this workshop is to take you to build a hybrid architecture step by step by using three new AWS networking services, AWS Transit Gateway, AWS Client VPN and Route53 Resolver. In the workshop, we will create 3 VPCs, 2 of them are application VPC and the other is shared services VPC where we will create AWS managed Microsoft Directory, AWS Client VPN endpoints and DNS service.The diagram below is the architecture we will build in this workshop.    
+The objective of this workshop is to take you to build a hybrid architecture step by step by using three AWS networking services, AWS Transit Gateway, AWS Client VPN and Route53 Resolver. In the workshop, we will create 3 VPCs, 2 of them are application VPC and the other is shared services VPC where we will create AWS managed Microsoft Directory, AWS Client VPN endpoints and DNS service.The diagram below is the architecture we will build in this workshop.    
 
 ![Deployment Diagram](images/architecture.jpg)
 
@@ -344,7 +344,7 @@ Choose **Create Record Set** and do the following:
 	Type: A-IPv4 address
 	Alias: No
 	TTL: 0
-	Value: **your instance private ip in VPC4VPN** (ex. 10.1.1.25)
+	Value: your instance private ip in VPC4VPN (ex. 10.1.1.25)
 	Routing Policy: Simple  
 	
 ![Deployment Diagram](images/dn.jpg)
