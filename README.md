@@ -71,7 +71,6 @@ In the Edit DHCP Options Set dialog box, select the options set that you recorde
 
 ![Deployment Diagram](images/editdhcp2.jpg)
 
-
 3) Create a Windows Instance and Automatically Join the Directory
 
 Open the Amazon EC2 console, choose Launch Instance and select **Microsoft Windows Server 2016 Base AMI**. On the page of **Configure Instance Details**, do the following:
@@ -98,7 +97,6 @@ Back to the page of **Configure Instance Details**, select **EC2DomainJoin** for
 Keep the setting default on the page of **Add Storage**, add key:**Name** and value:**WinServer** for tag, choose **Select an existing security group** and select the security group with name **Allow RDP and ICMP** and then click **Review and Launch**. Click **Launch** again and select a keypair for this workshop. 
 
 ![Deployment Diagram](images/ec2_sg.jpg)
-
 
 4) Install the Active Directory Tools on Your EC2 Instance
 
@@ -127,7 +125,6 @@ Click **Action** to create a **User**. Type **First name**, **Last name**, **Use
 Right click at **VPN Users** group, choose **Properties** and click **Members** to add the user to this user group.
 
 ![Deployment Diagram](images/joingroup.jpg)
-
 
 **STEP 3 - Create AWS Client VPN**
 ----------------------------------------------
@@ -173,8 +170,6 @@ Follow the instruction below to generate a server certificate and upload it into
 7. Upload the server certificate and key to ACM.
 
 		$ aws acm import-certificate --certificate file://server.crt --private-key file://server.key --certificate-chain file://ca.crt --region region
-
-
 
 Open **Certificate Manage** console, expand the details page of certificate you just imported and record the resource ARN.
 
@@ -240,7 +235,7 @@ Back to **Client VPN Endpoints** console, click **Connections** to check the con
 * Ping 168.95.1.1
 * Ping www.amazon.com
 
-Awesome!! Public IP is from Ashburn, VA US owned by Amazon. In term of ping result, we know the connectivity is available but the RTT is not good enough. The reason is that all traffic routing to the destination will be encapsulated and transmitted over OpenVPN tunnel. And the source IP address will be translated to EIP of Client VPN ENI hosted in subnet **VPC4VPN-SN1** or **VPC4VPN-SN2**. That's the reason why **"whatismyip"** shows you location in Virginia not you real location.
+Awesome!! Public IP is from Ashburn, VA US owned by Amazon. In term of ping result, we know the connectivity is available but the RTT is not good enough. The reason is that all traffic routing to the destination will be encapsulated and transmitted over OpenVPN tunnel. And the source IP address will be translated to EIP of Client VPN ENI hosted in subnet **VPC4VPN-SN1** or **VPC4VPN-SN2**. That's the reason why **"whatismyip"** shows your location in Virginia not your real location.
 
 ![Deployment Diagram](images/pingcheck.jpg)
 
@@ -253,7 +248,6 @@ Turn Windows Defender Firewall Off - <https://support.microsoft.com/en-us/help/4
 Ping the Linux instances located in VPC10 to verify whether the vpn connection can reach to other VPCs. The answer is no because there is no routing information between VPC4VPN and VPC10. 
 
 ![Deployment Diagram](images/pingvpc10.jpg)
-
 
 **STEP 4 - Create AWS Transit Gateway**
 ----------------------------------------------
@@ -287,7 +281,6 @@ Choose **Transit Gateway Route Tables** and go through each tab. Make sure the C
 
 ![Deployment Diagram](images/tgwroute.jpg)
 
-
 4) Add Routes between the Transit Gateway and your VPCs
 
 Choose **Route Tables**, select **VPC4VPN-RT** and click **Edit routes** under **Routes** tab.
@@ -318,7 +311,6 @@ Confirm the OpenVPN tunnel is still connected, open a terminal window and ping t
 You can ssh into the Linux instance in VPC10 and ping the private IP of instance in VPC20. In the diagram below, in addition to IP, the internal domain name of instance can be used to test too. Do you know why?
 
 ![Deployment Diagram](images/instance1ping.jpg)
-
 
 **STEP 5 - AWS Route 53 and DNS Resolver**
 ----------------------------------------------
@@ -378,7 +370,6 @@ Confirm the DNS records are created successfully.
 Back to EC2 console, create a Security Group with inbound rule of allowing TCP/UDP port 53 from anywhere. The Security Group will be applied to the Route 53 Inbound Resolver.
 
 ![Deployment Diagram](images/sgforinbound.jpg)
-
 
 Choose **Inbound endpoints** in the navigation pane, click **Create inbound endpoint** and do the following:
 
@@ -442,7 +433,6 @@ Ping the domain name of instances and browse **www.amazon.com**.
 
 * **Challenge 2** - If you want do fine-grained access control on TCP/UDP level for client VPN user, how do you do.
 **hint** - Configure Security Groups in Client VPN Endpoint
-
 
 * **Challenge 3** - If you allow client VPN users to access the resources in VPC10 and VPC20 but communication between VPCs is not allowed, how do you do.  
 **hint** - Configure multiple Transit Gateway Route Tables for routing isolation. 
