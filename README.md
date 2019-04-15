@@ -240,7 +240,7 @@ Back to **Client VPN Endpoints** console, click **Connections** to check the con
 * Ping 168.95.1.1
 * Ping www.amazon.com
 
-Awesome!! Public IP is from Ashburn, VA US owned by Amazon. In term of ping test, we know the connectivity is ok, but the RTT is not good enough. The reason is taht all traffic routing to the destination is transimmited over OpenVPN tunnel, and we built the AWS Client VPN endpoints in US-WEST not in Asia.
+Awesome!! Public IP is from Ashburn, VA US owned by Amazon. In term of ping result, we know the connectivity is available but the RTT is not good enough. The reason is that all traffic routing to the destination will be encapsulated and transmitted over OpenVPN tunnel. And the source IP address will be translated to EIP of Client VPN ENI hosted in subnet **VPC4VPN-SN1** or **VPC4VPN-SN2**. That's the reason why **"whatismyip"** shows you location in Virginia not you real location.
 
 ![Deployment Diagram](images/pingcheck.jpg)
 
