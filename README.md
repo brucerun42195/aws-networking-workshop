@@ -349,7 +349,7 @@ Choose **Create Record Set** and do the following:
 	
 ![Deployment Diagram](images/dn.jpg)
 
-Repeat the step above to create A record in VPC10 and VPC20
+Repeat the step above to create A record for instances in VPC10 and VPC20
 	
 **Instance in VPC10**
 	
