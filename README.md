@@ -169,7 +169,7 @@ Follow the instruction below to generate a server certificate and upload it into
 		
 7. Upload the server certificate and key to ACM.
 
-		$ aws acm import-certificate --certificate file://server.crt --private-key file://server.key --certificate-chain file://ca.crt --region region
+		$ aws acm import-certificate --certificate file://server.crt --private-key file://server.key --certificate-chain file://ca.crt --region us-east-1
 
 Open **Certificate Manage** console, expand the details page of certificate you just imported and record the resource ARN.
 
