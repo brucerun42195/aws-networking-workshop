@@ -425,7 +425,7 @@ Ping the domain name of instances and browse **www.amazon.com**.
 
 **AWESOME!! WE SUCCESSFULLY CONNECT THE AWS CLOUD AND INTERNET THROUGH AWS CLIENT VPN. IF YOU WANT TO BE AN AWS NETWORK EXPERT, THERE ARE SOME CHALLENGING LABS FOR YOU IN NEXT CHAPTER**
 
-**Challenge 1 - Integrate with Site-to-Site VPN**
+**Challenge - Integrate with Site-to-Site VPN**
 ----------------------------------------------
 In most hybrid cloud environment, creating a site to site VPN is always the first choice for customers to interconnect on-premises and AWS cloud in day one because of convenience and cost-effective. So, we will launch a Cisco CSR1000V to simulate an on-premises router and create a site-to-site VPN connection between CSR1000V and AWS Transit Gateway. Additionally, we will also create two Transit Gateway route tables for isolating the traffic in two different traffic types.
 
@@ -592,14 +592,14 @@ Add route **10.0.0.0/8** with **Tagert** **CSR1KV** into main route table of **V
 
 ![Deployment Diagram](images/privatesnroute.jpg)
 
-7) Launch a EC2 Instance in VPC4OnPremises-PrivateSN
+7) Launch an EC2 Instance in VPC4OnPremises-PrivateSN
 
 To test the network connectivity behind the CSR1000V, we need to launch an EC2 instance with private IP only in **VPC4OnPremises-PrivateSN**. Follow the link below if you don't know how to launch a Linux EC2 instance.
 
 <https://docs.aws.amazon.com/quickstarts/latest/vmlaunch/welcome.html>
    
 
-7) Test the Routing Behavior
+8) Test the Routing Behavior
 
 SSH into the instance in VPC10 and do the ping test, and your ping result will be the same as the screenshot below. 
 
@@ -617,18 +617,6 @@ Open Tunnelblick, establish OpenVPN connection and ping the same target as last 
 
 **Great!! We successfully control the routng policy in AWS Transit Gateway. Now, all traffic which originates from VPC10 and VPC20 will only access shared services VPC and on-premises VPC. Traffic between VPC10 and VPC20 will be dropped because of lack of routing entry in Transit Gateway route table. This is the common scenario enterprise customers would like to achieve, and you can also make some changes for service insertion and VPC segmentation.**
 
-
-**CHALLENGES**
-----------------------------------------------
-
-* **Challenge 1** - If you only allow specific client VPN users in AD domain group to access specific CIDR, how do you do.
-**hint** - Configure Authorization Rule in Client VPN Endpoint
-
-* **Challenge 2** - If you want do fine-grained access control on TCP/UDP level for client VPN user, how do you do.
-**hint** - Configure Security Groups in Client VPN Endpoint
-
-* **Challenge 3** - If you allow client VPN users to access the resources in VPC10 and VPC20 but communication between VPCs is not allowed, how do you do.  
-**hint** - Configure multiple Transit Gateway Route Tables for routing isolation. 
 
 
 
