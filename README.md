@@ -547,11 +547,11 @@ Use the Cisco commands below to verify the VPN status and BGP routes.
 
 ![Deployment Diagram](images/tunnelstatus.jpg)
 
-* Type **show ip bgp** to verify the routing information from 10.1.0.0/16, 10.10.0.0/16 and 10.20.0.0/16 is exist and the **Next Hop** is 169.254.100.1 and 169.254.200.1.  
+* Type **show ip bgp** to confirm the routing entries 10.1.0.0/16, 10.10.0.0/16 and 10.20.0.0/16 are exist, and the **Next Hop** is 169.254.100.1 and 169.254.200.1.  
 
 ![Deployment Diagram](images/bgproute.jpg)
 
-Back to Site-to-Site Connections console, select the connection you created for this lab and view the **Tunnel Details**. There are two tunnels you will see and each tunnel has 1 BGP route.
+Back to Site-to-Site VPN Connections console, select the connection you created for this lab and view the **Tunnel Details**. There are two tunnels you will see and each tunnel has 1 BGP route.
 
 ![Deployment Diagram](images/s2sbgproute.jpg)
 
@@ -561,7 +561,7 @@ Open Transit Gateway Route Tables console in the navigation pane, select the def
 
 5) Create a new Transit Gateway Route Table to Isolate the Traffic
 
-Before creating a new Transit Gateway route table, we must remove the relationship of VPC10/VPC20 from default route table. So, select the default Transit Gateway route table, select the **Attachment ID** binded to VPC10 and choose **Delete association**.(You can view the attachment relationship in **Transit Gateway Attachments** console) Repeat the step for removing VPC20 from default route table.
+Before creating a new Transit Gateway route table, we must remove the association of VPC10/VPC20 from default route table. So, select the default Transit Gateway route table, select the **Attachment ID** binded to VPC10 and choose **Delete association**.(You can view the attachment relationship in **Transit Gateway Attachments** console) Repeat the step for removing VPC20 from default route table.
 
 ![Deployment Diagram](images/deletassocvpc.jpg)
    
