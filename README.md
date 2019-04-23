@@ -425,6 +425,199 @@ Ping the domain name of instances and browse **www.amazon.com**.
 
 **AWESOME!! WE SUCCESSFULLY CONNECT THE AWS CLOUD AND INTERNET THROUGH AWS CLIENT VPN. IF YOU WANT TO BE AN AWS NETWORK EXPERT, THERE ARE SOME CHALLENGING LABS FOR YOU IN NEXT CHAPTER**
 
+**Challenge 1 - Integrate with Site-to-Site VPN**
+----------------------------------------------
+In most hybrid cloud environment, creating a site to site VPN is always the first choice for customers to interconnect on-premises and AWS cloud in day one because of convenience and cost-effective. So, we will launch a Cisco CSR1000V to simulate an on-premises router and create a site-to-site VPN connection between CSR1000V and AWS Transit Gateway. Additionally, we will also create two Transit Gateway route tables for isolating the traffic in two different traffic types.
+
+Type 1 - All traffic between VPC10 and VPC20 is prohibited
+
+Type 2 - All traffic is allowed except type 1
+
+![Deployment Diagram](images/scenario.jpg)
+
+1) Create a VPC to Simulate On-Premises Environment
+
+Before we start launching the Cisco CSR1000V, create the VPC resources listed below. (You must create the resources manually because the CloudFormation template you ran in **Step 1** didn't cover this part. 
+
+* VPC Name: **VPC4OnPremises**
+* VPC CIDR: **10.100.0.0/16**
+* Internet Gateway Name: **VPC4OnPremises-IGW**
+* Subnet Name: **VPC4OnPremises-PublicSN** and **VPC4OnPremises-PrivateSN**
+* Subnet CIDR: **10.100.1.0/24** for **VPC4OnPremises-PublicSN** 
+* Subnet CIDR: **10.100.2.0/24** for **VPC4OnPremises-PrivateSN**
+* Route Table Name: **VPC4OnPremises-RT**
+* Add default route to **VPC4OnPremises-RT** and configure **VPC4OnPremises-IGW** as target
+* Associate subnet **VPC4OnPremises-PublicSN** to route table **VPC4OnPremises-RT**
+
+2) Launch a Cisco CSR1000V
+
+On EC2 console, click **Launch Instance**, select **AWS Marketplace** and search "CSR1000V".
+
+![Deployment Diagram](images/searchcsr1kv.jpg)
+
+Click **Select** on the right of **Cisco Cloud Services Router (CSR) 1000V - AX Pkg. Max Performance**.
+
+![Deployment Diagram](images/selectcsr1kv.jpg)
+
+Select **t2.medium** for instance type and on the page of **Step 3: Configure Instance Details**, do the following:
+
+* Choose **VPC4OnPremises** for **Network**
+* Choose **VPC4OnPremises-PublicSN** for **Subnet**
+* Choose **Enable** for **Auto-assign Public IP**
+
+![Deployment Diagram](images/configcsr1kv.jpg)
+
+Confirm the **Volume Type** is **General Purpose SSD(gp2)** on the page of **Add Storage**. Add key:**Name** and value:**CSR1KV** for tag, select **Create a new security group** and modify the rule as below.
+
+![Deployment Diagram](images/csrsg.jpg)
+
+Click **Review and Launch**, click **Launch**, select your key pair and click **Launch Instances**.
+
+SSH into the CSR1KV with user name **ec2-user** not **root**, and you will see the output like this.
+
+![Deployment Diagram](images/sshcsr1kv.jpg)
+
+**IMPORTANT** You must disable **Source/Dest. Check** of CSR1000V to allow traffic to be routed by CSR1000V
+
+![Deployment Diagram](images/disablesourcecheck.jpg)
+
+3) Create a Site-to-Site VPN
+
+On the VPC console, select **Customer Gateways** and click **Create Customer Gateway**. Type the following parameters on the page of **Create Customer Gateway**.
+
+* Name: CSR1KV
+* Routing: Dynamic
+* BGP ASN: 65001
+* IP Address: Public IPv4 Address of CSR1000V 
+
+![Deployment Diagram](images/cgw.jpg)
+
+Choose **Transit Gateway Attachments** in the navigation pane, click **Create Transit Gateway Attachment** and type the parameters as the following then click **Create attachment**.
+
+* Transit Gateway ID: Networking Workshop
+* Attachment type: VPN
+* Customer Gateway: Existing
+* Customer Gateway ID: The ID of CSR1KV
+* Routing Options: Dynamic (requires BGP)
+* Inside IP CIDR Tunnel 1: 169.254.100.0/30
+* Pre-Shared Key for Tunnel 1: Passw0rd
+* Inside IP CIDR Tunnel 2: 169.254.200.0/30
+* Pre-Shared Key for Tunnel 1: Passw0rd
+
+![Deployment Diagram](images/tgwvpn.jpg)
+
+You will see the new Transit Gateway attachment in the console. Wait a period of time until the **State** of the VPN attachment changes to **available**. Choose **Site-to-Site VPN Connections** in the navigation pane, select the connection which has Transit Gateway ID and click **Download Configuration**. Select **Cisco Systems, Inc.** for Vendor, **CSRv AMI** for Platform and **IOS 12.4+** for Software. Click **Download** and save the file in your local disk.
+
+![Deployment Diagram](images/downloadconfig.jpg)
+
+We have to modify the router configuration file to fulfill the scenario we simulate that the routing entry of **VPC4OnPremises-PrivateSN** (10.100.2.0/24) will be only advertised to Transit Gateway. So,there are 3 steps you must do before copy the sample config into your CSR1KV.
+
+1.Edit the sample config and use the private IPv4 address of CSR1000V as the **local-address** IP and **tunnel source** IP. 
+
+**IMPORTANT**
+
+There are six places you need to modify in the sample config which is under **ISAKMP** and **Tunnel** configuration part.
+
+Type the private IPv4 address of CSR1000V to replace the parameter behind **local-address**. (ex: local-address 10.100.1.205)
+
+![Deployment Diagram](images/modifyconfig.jpg)
+
+Type the private IPv4 address of CSR1KV to replace the parameter behind **tunnel source**. (ex: tunnel source 10.100.1.205)
+
+![Deployment Diagram](images/modifyconfig1.jpg)
+
+2.Remove the commands under BGP configuration listed below:
+
+* **neighbor 169.254.100.1 default-originate**
+* **neighbor 169.254.200.1 default-originate**
+* **network 0.0.0.0**
+
+3.Add the commands listed below and type **show run | begin bgp** to verify the BGP configuration is identical as screenshot. 
+
+* **network 10.100.2.0 mask 255.255.255.0** under BGP configuration.
+* **ip route 10.100.2.0 255.255.255.0 10.100.1.1**
+
+![Deployment Diagram](images/bgpconfig.jpg)
+
+4) Verify the BGP Route Table and VPN Status
+
+Use the Cisco commands below to verify the VPN status and BGP routes.
+
+* Type **show ip interface brief** to show the interface status
+
+![Deployment Diagram](images/tunnelstatus.jpg)
+
+* Type **show ip bgp** to verify the routing information from 10.1.0.0/16, 10.10.0.0/16 and 10.20.0.0/16 is exist and the **Next Hop** is 169.254.100.1 and 169.254.200.1.  
+
+![Deployment Diagram](images/bgproute.jpg)
+
+Back to Site-to-Site Connections console, select the connection you created for this lab and view the **Tunnel Details**. There are two tunnels you will see and each tunnel has 1 BGP route.
+
+![Deployment Diagram](images/s2sbgproute.jpg)
+
+Open Transit Gateway Route Tables console in the navigation pane, select the default route table and view the **Routes**. You will be able to see a route that the CIDR is 10.100.2.0/24 which came from VPN.  
+
+![Deployment Diagram](images/routefromvpn.jpg)
+
+5) Create a new Transit Gateway Route Table to Isolate the Traffic
+
+Before creating a new Transit Gateway route table, we must remove the relationship of VPC10/VPC20 from default route table. So, select the default Transit Gateway route table, select the **Attachment ID** binded to VPC10 and choose **Delete association**.(You can view the attachment relationship in **Transit Gateway Attachments** console) Repeat the step for removing VPC20 from default route table.
+
+![Deployment Diagram](images/deletassocvpc.jpg)
+   
+Open Transit Gateway Route Tables console, click **Create Transit Gateway Route Table**, type **Isolated Traffic**, select the Transit Gateway created before and click **Create Transit Gateway Route Table**.
+
+Select the **Isolated Traffic** and click **Create association**. 
+
+![Deployment Diagram](images/create2rt.jpg)
+
+Select **VPC10** for **Choose attachment to associate** and click **Create association**. Repeat the step for associating attachment of VPC20.
+
+![Deployment Diagram](images/2ndrtassvpc10.jpg)
+
+Choose **Create propagation**, select **VPN** for **Choose attachment to propagate** and click **Create propagation**. Repeat the step for creating propagation of **VPC4VPN**. Finally, you will see the status of route table like the screenshots below.
+
+![Deployment Diagram](images/newtgwrt.jpg)
+
+![Deployment Diagram](images/newtgwrt2.jpg)
+
+6) Add the On-premises Route Entry into VPC Route Table
+
+Now, we have to add on-premises route entry(10.100.2.0) into VPC route table of VPC10, VPC20  and VPC4VPN. Choose **Route Tables**, select VPC10-RT, clcik **Edit routes** under **Routes** tab. Click **Add route**, type **10.100.2.0/24** for **Destination** and select **tgw-xxxxx** for **Target**. Click **Save routes**.
+Repeat the step to add the route into **VPC20-RT** and **VPC4VPN-RT**.
+
+![Deployment Diagram](images/addonpremroute.jpg)
+
+Add route **10.0.0.0/8** with **Tagert** **CSR1KV** into main route table of **VPC4OnPremises-RT**. This route entry is for **VPC4OnPremises-PrivateSN**(10.100.2.0/24). The traffic heads to VPC10, VPC20 and VPC4VPN will be routed to CSR1000V for route selection.
+
+![Deployment Diagram](images/privatesnroute.jpg)
+
+7) Launch a EC2 Instance in VPC4OnPremises-PrivateSN
+
+To test the network connectivity behind the CSR1000V, we need to launch an EC2 instance with private IP only in **VPC4OnPremises-PrivateSN**. Follow the link below if you don't know how to launch a Linux EC2 instance.
+
+<https://docs.aws.amazon.com/quickstarts/latest/vmlaunch/welcome.html>
+   
+
+7) Test the Routing Behavior
+
+SSH into the instance in VPC10 and do the ping test, and your ping result will be the same as the screenshot below. 
+
+*  ping the instance in VPC20 (ex: 10.20.1.152)
+*  ping the instance in VPC4VPN (ex: 10.1.1.25)
+*  ping the instance in VPCOnPremises-PrivateSN (ex: 10.100.2.136)
+
+**Question : Do you know why instance in VPC10 cannot successfully ping the instance in VPC20?**
+
+![Deployment Diagram](images/pingtest.jpg)
+
+Open Tunnelblick, establish OpenVPN connection and ping the same target as last step from your local laptop. 
+
+![Deployment Diagram](images/pingtest2.jpg)
+
+**Great!! We successfully control the routng policy in AWS Transit Gateway. Now, all traffic which originates from VPC10 and VPC20 will only access shared services VPC and on-premises VPC. Traffic between VPC10 and VPC20 will be dropped because of lack of routing entry in Transit Gateway route table. This is the common scenario enterprise customers would like to achieve, and you can also make some changes for service insertion and VPC segmentation.**
+
+
 **CHALLENGES**
 ----------------------------------------------
 
